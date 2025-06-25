@@ -1,0 +1,190 @@
+Paris,France,Berlin,Germany,1050
+Paris,France,Prague,Czech Republic,1050
+Paris,France,Vienna,Austria,1200
+Paris,France,Budapest,Hungary,1350
+Paris,France,Zagreb,Croatia,1400
+Paris,France,Venice,Italy,1100
+Paris,France,Milan,Italy,1050
+Paris,France,Zurich,Switzerland,600
+Paris,France,Munich,Germany,1000
+Paris,France,Frankfurt,Germany,800
+Paris,France,Amsterdam,Netherlands,500
+Paris,France,Brussels,Belgium,300
+Paris,France,London,United Kingdom,340
+Paris,France,Madrid,Spain,1050
+Paris,France,Barcelona,Spain,850
+Paris,France,Lyon,France,450
+Paris,France,Geneva,Switzerland,500
+Paris,France,Rome,Italy,1400
+Paris,France,Florence,Italy,1100
+Berlin,Germany,Prague,Czech Republic,350
+Berlin,Germany,Vienna,Austria,530
+Berlin,Germany,Budapest,Hungary,650
+Berlin,Germany,Zagreb,Croatia,880
+Berlin,Germany,Venice,Italy,1160
+Berlin,Germany,Milan,Italy,1050
+Berlin,Germany,Zurich,Switzerland,850
+Berlin,Germany,Munich,Germany,580
+Berlin,Germany,Frankfurt,Germany,550
+Berlin,Germany,Amsterdam,Netherlands,650
+Berlin,Germany,Brussels,Belgium,720
+Berlin,Germany,London,United Kingdom,1000
+Berlin,Germany,Madrid,Spain,2000
+Berlin,Germany,Barcelona,Spain,1600
+Berlin,Germany,Lyon,France,1100
+Berlin,Germany,Geneva,Switzerland,950
+Berlin,Germany,Rome,Italy,1470
+Berlin,Germany,Florence,Italy,1250
+Prague,Czech Republic,Vienna,Austria,250
+Prague,Czech Republic,Budapest,Hungary,530
+Prague,Czech Republic,Zagreb,Croatia,550
+Prague,Czech Republic,Venice,Italy,700
+Prague,Czech Republic,Milan,Italy,820
+Prague,Czech Republic,Zurich,Switzerland,640
+Prague,Czech Republic,Munich,Germany,350
+Prague,Czech Republic,Frankfurt,Germany,530
+Prague,Czech Republic,Amsterdam,Netherlands,820
+Prague,Czech Republic,Brussels,Belgium,770
+Prague,Czech Republic,London,United Kingdom,1100
+Prague,Czech Republic,Madrid,Spain,2000
+Prague,Czech Republic,Barcelona,Spain,1500
+Prague,Czech Republic,Lyon,France,1150
+Prague,Czech Republic,Geneva,Switzerland,800
+Prague,Czech Republic,Rome,Italy,1200
+Prague,Czech Republic,Florence,Italy,1000
+Vienna,Austria,Budapest,Hungary,243
+Vienna,Austria,Zagreb,Croatia,380
+Vienna,Austria,Venice,Italy,560
+Vienna,Austria,Milan,Italy,710
+Vienna,Austria,Zurich,Switzerland,750
+Vienna,Austria,Munich,Germany,430
+Vienna,Austria,Frankfurt,Germany,630
+Vienna,Austria,Amsterdam,Netherlands,1050
+Vienna,Austria,Brussels,Belgium,1000
+Vienna,Austria,London,United Kingdom,1350
+Vienna,Austria,Madrid,Spain,2000
+Vienna,Austria,Barcelona,Spain,1400
+Vienna,Austria,Lyon,France,1000
+Vienna,Austria,Geneva,Switzerland,900
+Vienna,Austria,Rome,Italy,1100
+Vienna,Austria,Florence,Italy,920
+Budapest,Hungary,Zagreb,Croatia,350
+Budapest,Hungary,Venice,Italy,700
+Budapest,Hungary,Milan,Italy,750
+Budapest,Hungary,Zurich,Switzerland,850
+Budapest,Hungary,Munich,Germany,550
+Budapest,Hungary,Frankfurt,Germany,800
+Budapest,Hungary,Amsterdam,Netherlands,1300
+Budapest,Hungary,Brussels,Belgium,1250
+Budapest,Hungary,London,United Kingdom,1600
+Budapest,Hungary,Madrid,Spain,2000
+Budapest,Hungary,Barcelona,Spain,1600
+Budapest,Hungary,Lyon,France,1300
+Budapest,Hungary,Geneva,Switzerland,1200
+Budapest,Hungary,Rome,Italy,1300
+Budapest,Hungary,Florence,Italy,1200
+Zagreb,Croatia,Venice,Italy,375
+Zagreb,Croatia,Milan,Italy,520
+Zagreb,Croatia,Zurich,Switzerland,750
+Zagreb,Croatia,Munich,Germany,580
+Zagreb,Croatia,Frankfurt,Germany,800
+Zagreb,Croatia,Amsterdam,Netherlands,1300
+Zagreb,Croatia,Brussels,Belgium,1250
+Zagreb,Croatia,London,United Kingdom,1600
+Zagreb,Croatia,Madrid,Spain,2000
+Zagreb,Croatia,Barcelona,Spain,1600
+Zagreb,Croatia,Lyon,France,1200
+Zagreb,Croatia,Geneva,Switzerland,1050
+Zagreb,Croatia,Rome,Italy,900
+Zagreb,Croatia,Florence,Italy,850
+Venice,Italy,Milan,Italy,275
+Venice,Italy,Zurich,Switzerland,530
+Venice,Italy,Munich,Germany,570
+Venice,Italy,Frankfurt,Germany,830
+Venice,Italy,Amsterdam,Netherlands,1300
+Venice,Italy,Brussels,Belgium,1250
+Venice,Italy,London,United Kingdom,1600
+Venice,Italy,Madrid,Spain,1700
+Venice,Italy,Barcelona,Spain,1300
+Venice,Italy,Lyon,France,660
+Venice,Italy,Geneva,Switzerland,540
+Venice,Italy,Rome,Italy,530
+Venice,Italy,Florence,Italy,260
+Milan,Italy,Zurich,Switzerland,217
+Milan,Italy,Munich,Germany,550
+Milan,Italy,Frankfurt,Germany,770
+Milan,Italy,Amsterdam,Netherlands,1100
+Milan,Italy,Brussels,Belgium,1000
+Milan,Italy,London,United Kingdom,1400
+Milan,Italy,Madrid,Spain,1400
+Milan,Italy,Barcelona,Spain,850
+Milan,Italy,Lyon,France,400
+Milan,Italy,Geneva,Switzerland,300
+Milan,Italy,Rome,Italy,570
+Milan,Italy,Florence,Italy,300
+Zurich,Switzerland,Munich,Germany,315
+Zurich,Switzerland,Frankfurt,Germany,410
+Zurich,Switzerland,Amsterdam,Netherlands,720
+Zurich,Switzerland,Brussels,Belgium,660
+Zurich,Switzerland,London,United Kingdom,990
+Zurich,Switzerland,Madrid,Spain,1400
+Zurich,Switzerland,Barcelona,Spain,1200
+Zurich,Switzerland,Lyon,France,400
+Zurich,Switzerland,Geneva,Switzerland,280
+Zurich,Switzerland,Rome,Italy,710
+Zurich,Switzerland,Florence,Italy,540
+Munich,Germany,Frankfurt,Germany,393
+Munich,Germany,Amsterdam,Netherlands,750
+Munich,Germany,Brussels,Belgium,690
+Munich,Germany,London,United Kingdom,1000
+Munich,Germany,Madrid,Spain,1500
+Munich,Germany,Barcelona,Spain,1400
+Munich,Germany,Lyon,France,680
+Munich,Germany,Geneva,Switzerland,480
+Munich,Germany,Rome,Italy,900
+Munich,Germany,Florence,Italy,700
+Frankfurt,Germany,Amsterdam,Netherlands,450
+Frankfurt,Germany,Brussels,Belgium,380
+Frankfurt,Germany,London,United Kingdom,730
+Frankfurt,Germany,Madrid,Spain,1700
+Frankfurt,Germany,Barcelona,Spain,1300
+Frankfurt,Germany,Lyon,France,600
+Frankfurt,Germany,Geneva,Switzerland,500
+Frankfurt,Germany,Rome,Italy,1100
+Frankfurt,Germany,Florence,Italy,900
+Amsterdam,Netherlands,Brussels,Belgium,170
+Amsterdam,Netherlands,London,United Kingdom,360
+Amsterdam,Netherlands,Madrid,Spain,1600
+Amsterdam,Netherlands,Barcelona,Spain,1400
+Amsterdam,Netherlands,Lyon,France,760
+Amsterdam,Netherlands,Geneva,Switzerland,850
+Amsterdam,Netherlands,Rome,Italy,1600
+Amsterdam,Netherlands,Florence,Italy,1400
+Brussels,Belgium,London,United Kingdom,320
+Brussels,Belgium,Madrid,Spain,1500
+Brussels,Belgium,Barcelona,Spain,1300
+Brussels,Belgium,Lyon,France,640
+Brussels,Belgium,Geneva,Switzerland,610
+Brussels,Belgium,Rome,Italy,1350
+Brussels,Belgium,Florence,Italy,1150
+London,United Kingdom,Madrid,Spain,1400
+London,United Kingdom,Barcelona,Spain,1500
+London,United Kingdom,Lyon,France,890
+London,United Kingdom,Geneva,Switzerland,1000
+London,United Kingdom,Rome,Italy,1500
+London,United Kingdom,Florence,Italy,1300
+Madrid,Spain,Barcelona,Spain,620
+Madrid,Spain,Lyon,France,1100
+Madrid,Spain,Geneva,Switzerland,1300
+Madrid,Spain,Rome,Italy,1500
+Madrid,Spain,Florence,Italy,1400
+Barcelona,Spain,Lyon,France,660
+Barcelona,Spain,Geneva,Switzerland,850
+Barcelona,Spain,Rome,Italy,1100
+Barcelona,Spain,Florence,Italy,1200
+Lyon,France,Geneva,Switzerland,140
+Lyon,France,Rome,Italy,760
+Lyon,France,Florence,Italy,760
+Geneva,Switzerland,Rome,Italy,720
+Geneva,Switzerland,Florence,Italy,670
+Rome,Italy,Florence,Italy,280
