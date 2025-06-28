@@ -4,9 +4,14 @@ use std::{
     collections::HashMap,
     fs::File,
     io::Read,
+    num::NonZero,
     process::exit,
-    sync::{Arc, RwLock},
-    thread,
+    sync::{
+        Arc, Condvar, Mutex, RwLock,
+        atomic::{AtomicI32, Ordering},
+        mpsc::channel,
+    },
+    thread::{self, available_parallelism},
     time::Instant,
     usize,
 };
@@ -17,14 +22,16 @@ fn main() {
     match load_data("input.txt") {
         Ok((distances, cities)) => {
             // pretty_print_grid(&distances);
-            // let now = Instant::now();
-            // let (min_distance, path) = held_karp_seq(&distances, distances.rows(), &cities);
-            // println!("Min distance: {}", min_distance);
-            // println!("Path: {}", path);
-            // println!("Time: {:?}", now.elapsed());
+            let now = Instant::now();
+            let (min_distance, path) = held_karp_seq(&distances, distances.rows(), &cities);
+            println!("---------- SEQUENTIAL ----------");
+            println!("Min distance: {}", min_distance);
+            println!("Path: {}", path);
+            println!("Time: {:?}", now.elapsed());
 
             let now = Instant::now();
             let (min_distance, path) = held_karp_par(&distances, distances.rows(), &cities);
+            println!("---------- PARALLEL ----------");
             println!("Min distance: {}", min_distance);
             println!("Path: {}", path);
             println!("Time: {:?}", now.elapsed());
@@ -129,6 +136,86 @@ fn held_karp_seq(
     (min_cost, path)
 }
 
+fn held_karp_par(
+    distances: &Grid<usize>,
+    n: usize,
+    cities: &HashMap<usize, String>,
+) -> (usize, String) {
+    let mut shortest_paths: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
+    for i in 1..n {
+        shortest_paths.insert((1 << i - 1, i), (distances[(0, i)], 0));
+    }
+
+    let num_threads = available_parallelism()
+        .unwrap_or(NonZero::new(4).unwrap())
+        .get();
+
+    let shortest_paths_arc = Arc::new(RwLock::new(shortest_paths));
+    let distances_arc = Arc::new(distances.clone());
+
+    let job_counter = Arc::new(AtomicI32::new(0));
+    let pair = Arc::new((Mutex::new(()), Condvar::new()));
+
+    let threads = (0..num_threads)
+        .map(|i| {
+            let distances_clone = distances_arc.clone();
+            let shortest_paths_clone = shortest_paths_arc.clone();
+            let (sender, receiver) = channel();
+            let job_counter = job_counter.clone();
+            let pair = pair.clone();
+
+            (
+                thread::spawn(move || {
+                    while let Ok(subset) = receiver.recv() {
+                        // println!("Thread {i} received {subset:#019b}");
+                        evaluate_subset_par(&distances_clone, &shortest_paths_clone, subset);
+                        // println!("Thread {i} finished job");
+                        let x = job_counter.fetch_sub(1, Ordering::Release);
+                        // println!("Thread {i} decremented {x}");
+                        // if job_counter.fetch_sub(1, Ordering::Release) == 1 {
+                        if x == 1 {
+                            let _guard = pair.0.lock().unwrap();
+                            // println!("Thread {i} notifies main thread");
+                            pair.1.notify_one();
+                        }
+                    }
+                }),
+                sender,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    let (lock, cvar) = &*pair;
+
+    let mut channel_num = 0;
+    for subset_size in 2..n {
+        let mut count = 0;
+        // println!("Main thread starts generating jobs");
+        for subset in get_combinations(subset_size, n - 1) {
+            threads[channel_num].1.send(subset).unwrap();
+            channel_num = (channel_num + 1) % num_threads;
+            count += 1;
+        }
+
+        // println!("Main thread added {count} jobs");
+        if job_counter.fetch_add(count, Ordering::Acquire) != -count {
+            let mut guard = lock.lock().unwrap();
+            // println!("Waiting for threads to finish");
+            guard = cvar.wait(guard).unwrap();
+        }
+    }
+
+    for thread in threads {
+        drop(thread.1);
+        thread.0.join().unwrap();
+    }
+
+    let shortest_paths = RwLock::into_inner(Arc::into_inner(shortest_paths_arc).unwrap()).unwrap();
+    let (min_cost, path) = find_best_cost_path(distances, n, cities, shortest_paths);
+
+    (min_cost, path)
+}
+
 fn find_best_cost_path(
     distances: &Grid<usize>,
     n: usize,
@@ -166,39 +253,6 @@ fn find_best_cost_path(
     (min_cost, path_str)
 }
 
-fn held_karp_par(
-    distances: &Grid<usize>,
-    n: usize,
-    cities: &HashMap<usize, String>,
-) -> (usize, String) {
-    let mut shortest_paths: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
-    for i in 1..n {
-        shortest_paths.insert((1 << i - 1, i), (distances[(0, i)], 0));
-    }
-
-    let shortest_paths_arc = Arc::new(RwLock::new(shortest_paths));
-    let distances_arc = Arc::new(distances.clone());
-    for subset_size in 2..n {
-        let mut handles = vec![];
-        for subset in get_combinations(subset_size, n - 1) {
-            let shortest_paths_clone = shortest_paths_arc.clone();
-            let distances_clone = distances_arc.clone();
-            println!("Spawning thread");
-            handles.push(thread::spawn(move || {
-                evaluate_subset_par(distances_clone, shortest_paths_clone, subset)
-            }));
-        }
-        for handle in handles {
-            handle.join().unwrap();
-        }
-    }
-
-    let shortest_paths = RwLock::into_inner(Arc::into_inner(shortest_paths_arc).unwrap()).unwrap();
-    let (min_cost, path) = find_best_cost_path(distances, n, cities, shortest_paths);
-
-    (min_cost, path)
-}
-
 fn evaluate_subset_seq(
     distances: &Grid<usize>,
     shortest_paths: &mut HashMap<(usize, usize), (usize, usize)>,
@@ -214,8 +268,8 @@ fn evaluate_subset_seq(
 }
 
 fn evaluate_subset_par(
-    distances: Arc<Grid<usize>>,
-    shortest_paths: Arc<RwLock<HashMap<(usize, usize), (usize, usize)>>>,
+    distances: &Arc<Grid<usize>>,
+    shortest_paths: &Arc<RwLock<HashMap<(usize, usize), (usize, usize)>>>,
     subset: usize,
 ) {
     let mut dest = 1;
@@ -282,10 +336,28 @@ fn find_min_cost_path_via_subset_par(
 }
 
 #[test]
-fn test_simple() {
+fn test_seq() {
     match load_data("input_test.txt") {
         Ok((distances, cities)) => {
             let (min_distance, path) = held_karp_seq(&distances, distances.rows(), &cities);
+            assert_eq!(3243, min_distance);
+            assert_eq!(
+                "Paris,France -> Budapest,Hungary -> Vienna,Austria -> Prague,Czech Republic -> Berlin,Germany -> Paris,France",
+                path
+            );
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            exit(1);
+        }
+    }
+}
+
+#[test]
+fn test_par() {
+    match load_data("input_test.txt") {
+        Ok((distances, cities)) => {
+            let (min_distance, path) = held_karp_par(&distances, distances.rows(), &cities);
             assert_eq!(3243, min_distance);
             assert_eq!(
                 "Paris,France -> Budapest,Hungary -> Vienna,Austria -> Prague,Czech Republic -> Berlin,Germany -> Paris,France",
