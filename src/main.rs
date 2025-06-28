@@ -6,11 +6,7 @@ use std::{
     io::Read,
     num::NonZero,
     process::exit,
-    sync::{
-        Arc, Condvar, Mutex, RwLock,
-        atomic::{AtomicI32, Ordering},
-        mpsc::channel,
-    },
+    sync::{Arc, mpsc::channel},
     thread::{self, available_parallelism},
     time::Instant,
     usize,
@@ -43,6 +39,7 @@ fn main() {
     }
 }
 
+#[allow(dead_code)]
 fn pretty_print_grid(distances: &Grid<usize>) {
     print!("\t");
     for i in 0..distances.rows() {
@@ -150,67 +147,45 @@ fn held_karp_par(
         .unwrap_or(NonZero::new(4).unwrap())
         .get();
 
-    let shortest_paths_arc = Arc::new(RwLock::new(shortest_paths));
     let distances_arc = Arc::new(distances.clone());
-
-    let job_counter = Arc::new(AtomicI32::new(0));
-    let pair = Arc::new((Mutex::new(()), Condvar::new()));
-
-    let threads = (0..num_threads)
-        .map(|i| {
-            let distances_clone = distances_arc.clone();
-            let shortest_paths_clone = shortest_paths_arc.clone();
-            let (sender, receiver) = channel();
-            let job_counter = job_counter.clone();
-            let pair = pair.clone();
-
-            (
-                thread::spawn(move || {
-                    while let Ok(subset) = receiver.recv() {
-                        // println!("Thread {i} received {subset:#019b}");
-                        evaluate_subset_par(&distances_clone, &shortest_paths_clone, subset);
-                        // println!("Thread {i} finished job");
-                        let x = job_counter.fetch_sub(1, Ordering::Release);
-                        // println!("Thread {i} decremented {x}");
-                        // if job_counter.fetch_sub(1, Ordering::Release) == 1 {
-                        if x == 1 {
-                            let _guard = pair.0.lock().unwrap();
-                            // println!("Thread {i} notifies main thread");
-                            pair.1.notify_one();
-                        }
-                    }
-                }),
-                sender,
-            )
-        })
-        .collect::<Vec<_>>();
-
-    let (lock, cvar) = &*pair;
 
     let mut channel_num = 0;
     for subset_size in 2..n {
-        let mut count = 0;
-        // println!("Main thread starts generating jobs");
+        let shortest_paths_arc = Arc::new(shortest_paths.clone());
+        let threads = (0..num_threads)
+            .map(|_| {
+                let distances_clone = distances_arc.clone();
+                let shortest_paths_clone = shortest_paths_arc.clone();
+                let (sender, receiver) = channel();
+
+                (
+                    thread::spawn(move || {
+                        let mut result = HashMap::new();
+                        while let Ok(subset) = receiver.recv() {
+                            result.extend(evaluate_subset_par(
+                                &distances_clone,
+                                &shortest_paths_clone,
+                                subset,
+                            ));
+                        }
+                        result
+                    }),
+                    sender,
+                )
+            })
+            .collect::<Vec<_>>();
+
         for subset in get_combinations(subset_size, n - 1) {
             threads[channel_num].1.send(subset).unwrap();
             channel_num = (channel_num + 1) % num_threads;
-            count += 1;
         }
 
-        // println!("Main thread added {count} jobs");
-        if job_counter.fetch_add(count, Ordering::Acquire) != -count {
-            let mut guard = lock.lock().unwrap();
-            // println!("Waiting for threads to finish");
-            guard = cvar.wait(guard).unwrap();
+        for thread in threads {
+            drop(thread.1);
+            shortest_paths.extend(thread.0.join().unwrap());
         }
     }
 
-    for thread in threads {
-        drop(thread.1);
-        thread.0.join().unwrap();
-    }
-
-    let shortest_paths = RwLock::into_inner(Arc::into_inner(shortest_paths_arc).unwrap()).unwrap();
     let (min_cost, path) = find_best_cost_path(distances, n, cities, shortest_paths);
 
     (min_cost, path)
@@ -267,18 +242,31 @@ fn evaluate_subset_seq(
     }
 }
 
+fn indices_of_set_bits(mut n: usize) -> Vec<(usize, usize)> {
+    let mut indices = vec![];
+    while n != 0 {
+        let idx = n.trailing_zeros() as usize;
+        // 1 based indexing
+        indices.push((idx + 1, 1 << idx));
+        n &= n - 1;
+    }
+    indices
+}
+
 fn evaluate_subset_par(
     distances: &Arc<Grid<usize>>,
-    shortest_paths: &Arc<RwLock<HashMap<(usize, usize), (usize, usize)>>>,
+    shortest_paths: &Arc<HashMap<(usize, usize), (usize, usize)>>,
     subset: usize,
-) {
-    let mut dest = 1;
-    while dest < subset {
-        if dest & subset != 0 {
-            find_min_cost_path_via_subset_par(&distances, &shortest_paths, subset, dest);
-        }
-        dest <<= 1;
-    }
+) -> HashMap<(usize, usize), (usize, usize)> {
+    indices_of_set_bits(subset)
+        .into_iter()
+        .map(|(idx, mask)| {
+            (
+                (subset, idx),
+                find_min_cost_path_via_subset_par(&distances, &shortest_paths, subset ^ mask, idx),
+            )
+        })
+        .collect()
 }
 
 fn find_min_cost_path_via_subset(
@@ -309,30 +297,18 @@ fn find_min_cost_path_via_subset(
 
 fn find_min_cost_path_via_subset_par(
     distances: &Arc<Grid<usize>>,
-    shortest_paths: &Arc<RwLock<HashMap<(usize, usize), (usize, usize)>>>,
-    subset: usize,
+    shortest_paths: &Arc<HashMap<(usize, usize), (usize, usize)>>,
+    intermediate_nodes: usize,
     dest: usize,
-) {
-    let dest_idx = dest.ilog2() as usize + 1;
-    let intermediate_nodes = subset ^ dest;
-    let mut before_dest = 1;
-    let mut min_cost = usize::MAX;
-    let mut best_before_dest = before_dest;
-    while before_dest <= intermediate_nodes {
-        if before_dest & intermediate_nodes != 0 {
-            let before_dest_idx = before_dest.ilog2() as usize + 1;
-            let shortest_paths_read = shortest_paths.read().unwrap();
-            let cost = shortest_paths_read[&(intermediate_nodes, before_dest_idx)].0
-                + distances[(before_dest_idx, dest_idx)];
-            if min_cost > cost {
-                min_cost = cost;
-                best_before_dest = before_dest_idx;
-            }
-        }
-        before_dest <<= 1;
-    }
-    let mut shortest_paths_write = shortest_paths.write().unwrap();
-    shortest_paths_write.insert((subset, dest_idx), (min_cost, best_before_dest));
+) -> (usize, usize) {
+    indices_of_set_bits(intermediate_nodes)
+        .into_iter()
+        .map(|(idx, _)| {
+            let cost = shortest_paths[&(intermediate_nodes, idx)].0 + distances[(idx, dest)];
+            (cost, idx)
+        })
+        .min()
+        .unwrap()
 }
 
 #[test]
