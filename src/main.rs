@@ -18,19 +18,23 @@ fn main() {
     match load_data("input.txt") {
         Ok((distances, cities)) => {
             // pretty_print_grid(&distances);
-            let now = Instant::now();
-            let (min_distance, path) = held_karp_seq(&distances, distances.rows(), &cities);
-            println!("---------- SEQUENTIAL ----------");
-            println!("Min distance: {}", min_distance);
-            println!("Path: {}", path);
-            println!("Time: {:?}", now.elapsed());
+            for num_cities in (8..=distances.rows()).step_by(4) {
+                let now = Instant::now();
+                let (min_distance, path) = held_karp_seq(&distances, num_cities, &cities);
+                println!("---------- SEQUENTIAL ({num_cities} cities) ----------");
+                println!("Min distance: {}", min_distance);
+                println!("Path: {}", path);
+                println!("Time: {:?}", now.elapsed());
+                println!("------------------------------------------------------");
 
-            let now = Instant::now();
-            let (min_distance, path) = held_karp_par(&distances, distances.rows(), &cities);
-            println!("---------- PARALLEL ----------");
-            println!("Min distance: {}", min_distance);
-            println!("Path: {}", path);
-            println!("Time: {:?}", now.elapsed());
+                let now = Instant::now();
+                let (min_distance, path) = held_karp_par(&distances, num_cities, &cities);
+                println!("---------- PARALLEL ({num_cities} cities) ----------");
+                println!("Min distance: {}", min_distance);
+                println!("Path: {}", path);
+                println!("Time: {:?}", now.elapsed());
+                println!("------------------------------------------------------");
+            }
         }
         Err(e) => {
             eprintln!("{e}");
@@ -124,7 +128,7 @@ fn held_karp_seq(
 
     for subset_size in 2..n {
         for subset in get_combinations(subset_size, n - 1) {
-            evaluate_subset_seq(distances, &mut shortest_paths, subset);
+            evaluate_subset_seq2(distances, &mut shortest_paths, subset);
         }
     }
 
@@ -228,18 +232,21 @@ fn find_best_cost_path(
     (min_cost, path_str)
 }
 
-fn evaluate_subset_seq(
+fn evaluate_subset_seq2(
     distances: &Grid<usize>,
     shortest_paths: &mut HashMap<(usize, usize), (usize, usize)>,
     subset: usize,
 ) {
-    let mut dest = 1;
-    while dest < subset {
-        if dest & subset != 0 {
-            find_min_cost_path_via_subset(distances, shortest_paths, subset, dest);
-        }
-        dest <<= 1;
-    }
+    indices_of_set_bits(subset)
+        .into_iter()
+        .for_each(|(idx, mask)| {
+            shortest_paths.insert(
+                (subset, idx),
+                find_min_cost_path_via_subset_seq2(&distances, &shortest_paths, subset ^ mask, idx),
+            );
+            // (subset, idx),
+            //     find_min_cost_path_via_subset_seq2(&distances, &shortest_paths, subset ^ mask, idx),
+        })
 }
 
 fn indices_of_set_bits(mut n: usize) -> Vec<(usize, usize)> {
@@ -269,30 +276,20 @@ fn evaluate_subset_par(
         .collect()
 }
 
-fn find_min_cost_path_via_subset(
+fn find_min_cost_path_via_subset_seq2(
     distances: &Grid<usize>,
-    shortest_paths: &mut HashMap<(usize, usize), (usize, usize)>,
-    subset: usize,
+    shortest_paths: &HashMap<(usize, usize), (usize, usize)>,
+    intermediate_nodes: usize,
     dest: usize,
-) {
-    let dest_idx = dest.ilog2() as usize + 1;
-    let intermediate_nodes = subset ^ dest;
-    let mut before_dest = 1;
-    let mut min_cost = usize::MAX;
-    let mut best_before_dest = before_dest;
-    while before_dest <= intermediate_nodes {
-        if before_dest & intermediate_nodes != 0 {
-            let before_dest_idx = before_dest.ilog2() as usize + 1;
-            let cost = shortest_paths[&(intermediate_nodes, before_dest_idx)].0
-                + distances[(before_dest_idx, dest_idx)];
-            if min_cost > cost {
-                min_cost = cost;
-                best_before_dest = before_dest_idx;
-            }
-        }
-        before_dest <<= 1;
-    }
-    shortest_paths.insert((subset, dest_idx), (min_cost, best_before_dest));
+) -> (usize, usize) {
+    indices_of_set_bits(intermediate_nodes)
+        .into_iter()
+        .map(|(idx, _)| {
+            let cost = shortest_paths[&(intermediate_nodes, idx)].0 + distances[(idx, dest)];
+            (cost, idx)
+        })
+        .min()
+        .unwrap()
 }
 
 fn find_min_cost_path_via_subset_par(
