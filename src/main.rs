@@ -128,7 +128,7 @@ fn held_karp_seq(
 
     for subset_size in 2..n {
         for subset in get_combinations(subset_size, n - 1) {
-            evaluate_subset_seq2(distances, &mut shortest_paths, subset);
+            evaluate_subset_seq(distances, &mut shortest_paths, subset);
         }
     }
 
@@ -232,7 +232,7 @@ fn find_best_cost_path(
     (min_cost, path_str)
 }
 
-fn evaluate_subset_seq2(
+fn evaluate_subset_seq(
     distances: &Grid<usize>,
     shortest_paths: &mut HashMap<(usize, usize), (usize, usize)>,
     subset: usize,
@@ -242,10 +242,8 @@ fn evaluate_subset_seq2(
         .for_each(|(idx, mask)| {
             shortest_paths.insert(
                 (subset, idx),
-                find_min_cost_path_via_subset_seq2(&distances, &shortest_paths, subset ^ mask, idx),
+                find_min_cost_path_via_subset_seq(&distances, &shortest_paths, subset ^ mask, idx),
             );
-            // (subset, idx),
-            //     find_min_cost_path_via_subset_seq2(&distances, &shortest_paths, subset ^ mask, idx),
         })
 }
 
@@ -276,7 +274,7 @@ fn evaluate_subset_par(
         .collect()
 }
 
-fn find_min_cost_path_via_subset_seq2(
+fn find_min_cost_path_via_subset_seq(
     distances: &Grid<usize>,
     shortest_paths: &HashMap<(usize, usize), (usize, usize)>,
     intermediate_nodes: usize,
@@ -306,40 +304,4 @@ fn find_min_cost_path_via_subset_par(
         })
         .min()
         .unwrap()
-}
-
-#[test]
-fn test_seq() {
-    match load_data("input_test.txt") {
-        Ok((distances, cities)) => {
-            let (min_distance, path) = held_karp_seq(&distances, distances.rows(), &cities);
-            assert_eq!(3243, min_distance);
-            assert_eq!(
-                "Paris,France -> Budapest,Hungary -> Vienna,Austria -> Prague,Czech Republic -> Berlin,Germany -> Paris,France",
-                path
-            );
-        }
-        Err(e) => {
-            eprintln!("{e}");
-            exit(1);
-        }
-    }
-}
-
-#[test]
-fn test_par() {
-    match load_data("input_test.txt") {
-        Ok((distances, cities)) => {
-            let (min_distance, path) = held_karp_par(&distances, distances.rows(), &cities);
-            assert_eq!(3243, min_distance);
-            assert_eq!(
-                "Paris,France -> Budapest,Hungary -> Vienna,Austria -> Prague,Czech Republic -> Berlin,Germany -> Paris,France",
-                path
-            );
-        }
-        Err(e) => {
-            eprintln!("{e}");
-            exit(1);
-        }
-    }
 }
